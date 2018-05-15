@@ -12,7 +12,7 @@
   "title": "index",
   "viewMode": "presentation",
   "lastSaved": "2018-05-10T20:10:41.678Z",
-  "lastExport": "2018-05-15T23:38:20.399Z"
+  "lastExport": "2018-05-15T23:47:16.160Z"
 }
 
 %% resource
@@ -174,7 +174,7 @@ var descElem = entry => {
     let cta = hbCtA(entry)
     let msg = hbMessage(entry)
     let hbmsgElem = ME({tag: 'span', cl: 'hb-message', text: msg})
-    let ctaElem = ME({tag: 'a', text: cta})
+    let ctaElem = ME({tag: 'a', text: ` ${cta}`})
     ctaElem.href = cta
     container.appendChild(hbmsgElem)
     container.appendChild(ctaElem)
