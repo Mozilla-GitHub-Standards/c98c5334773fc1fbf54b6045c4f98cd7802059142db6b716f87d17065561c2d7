@@ -12,7 +12,7 @@
   "title": "index",
   "viewMode": "presentation",
   "lastSaved": "2018-05-10T20:10:41.678Z",
-  "lastExport": "2018-05-15T03:17:37.689Z"
+  "lastExport": "2018-05-15T23:38:20.399Z"
 }
 
 %% resource
@@ -39,12 +39,27 @@ data = ddd
 data
 
 %% js
+function prettyDate(date){
+	let NOW = new Date();
+  	let diff = (((new Date()).getTime() - date.getTime()) / 1000);
+	let dayDiff = Math.floor(diff / 86400);
+  	return `${dayDiff} days ago`
+}
+
+%% js
 var studyName = (entry) => entry.name
 var statusFlag = (entry) => {
-  if (entry.enabled) return 'enabled'
+  let TODAY = new Date()
+  if (entry.enabled) {
+    // get proposed end date.
+    // compare to today.
+    return 'enabled'
+  }
   else if (entry.is_approved) return 'approved'
+  else if (!entry.enabled && entry.approval_request !== null) return 'completed'
   else return 'unapproved'
 }
+
 
 var statusLastUpdate = (entry) => new Date(entry.last_updated.slice(0,10))
 var hbMessage = (entry) => entry.arguments.message
@@ -58,6 +73,7 @@ var filterExpressions = entry => {
   expressions = expressions.slice(2, expressions.length-2).split('&&').map(e=>e.trim())
   return expressions
 }
+
 
 var studyType = entry => entry.action.name
 
@@ -83,18 +99,31 @@ var statusElement = entry => {
     sfElem.classList.add('status-flag-enabled')
   } else if (sf === 'approved') {
     sfElem.classList.add('status-flag-approved')
+  } else if (sf === 'completed') {
+    sfElem.classList.add('status-flag-completed')
   } else {
     sfElem.classList.add('status-flag-unapproved')
   }
   sfElem.innerHTML = sf
+  
+  elem.appendChild(sfElem)
+  //elem.appendChild(updatedElem)
+  return elem
+}
+
+var asOf = entry => {
   let lastUpdated = statusLastUpdate(entry)
+  let fd = prettyDate(lastUpdated)
+  console.log('???', fd, lastUpdated)
   let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   let dow = ['Sun', 'Mon', 'Tue', 'Weds', 'Thur', 'Fri', 'Sat']
   let dateString = `as of ${dow[lastUpdated.getDay()]} ${months[lastUpdated.getMonth()]} ${lastUpdated.getUTCDate()} ${lastUpdated.getFullYear()}`
   let updatedElem = ME({cl: 'last-updated', text: dateString})
-  elem.appendChild(sfElem)
-  elem.appendChild(updatedElem)
-  return elem
+  let fdElem = ME({cl:'time-since', text: fd})
+  let container = ME({cl: 'study-date'})
+  container.appendChild(updatedElem)
+  container.appendChild(fdElem)
+  return container
 }
 
 var chAndVerElem = entry => {
@@ -194,21 +223,34 @@ function filterStudy(data, studyTypes) {
   })
 }
 
-function filterUnapproved(data) {
-  return data.filter(d => statusFlag(d) !== 'unapproved')
+function filterCompleted(data) {
+  return data.filter(d => statusFlag(d) !== 'completed' && statusFlag(d) !== 'unapproved')
 }
 
 //<input id="checkBox" type="checkbox" on>
 //
 
 %% md
-<h1 class='main-title'>Shield Studies Viewer</h1>
+<h1 class='main-title'><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 8 8"   style="padding-top:10px">
+  <path d="M.5 0c-.28 0-.5.22-.5.5s.22.5.5.5.5-.22.5-.5-.22-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.28 0-.5.22-.5.5s.22.5.5.5.5-.22.5-.5-.22-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.28 0-.5.22-.5.5s.22.5.5.5.5-.22.5-.5-.22-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.28 0-.5.22-.5.5s.22.5.5.5.5-.22.5-.5-.22-.5-.5-.5zm1.5 0v1h6v-1h-6z"
+
+  />
+</svg> Shield Studies Viewer</h1>
+
+<div class='disclaimer'><span>disclaimer</span>: the studies here are a cached version until this display is up on the S&I server. Feedback can be sent to <span>hulmer</span> on Slack.</div>
+
+<div class='links'>
+  <span>links</span>: 
+  <a href='https://trello.com/b/maMI2Fn6/shield-studies' target='_blank'>[Shield Trello Board]</a> 
+  <a href='https://bugzilla.mozilla.org/buglist.cgi?product=Shield&component=Shield%20Study&resolution=---&list_id=14150954' target='_blank'>[BMO: Shield Component]</a> 
+  <a href='https://docs.google.com/document/d/1fj4BqG0N-cN_Fx5sq-AozdiOdKO7asaDWR4B7sH88F0/edit' target='_blank'>[PHD list]</a>
+</div>
 
 <div id='controls'>
   <input type="text" id="search" placeholder="search">
 
 <input id="approved" type="checkbox" value='approved' checked>
-      <label for="approved" class='hang-right'>Only Approved Studies</label>
+      <label for="approved" class='hang-right'>Only In-Flight Studies</label>
 <input id="hb" type="checkbox" value='hb'>
       <label for="hb">Heartbeat</label>
 
@@ -265,7 +307,7 @@ function dataTable(data, mapper) {
     filteredData = SEARCH.search(FILTERS.search)
   }
   filteredData = filterStudy(filteredData, studies)
-  if (FILTERS.approved) filteredData = filterUnapproved(filteredData)
+  if (FILTERS.approved) filteredData = filterCompleted(filteredData)
   
   let filteredTotal = filteredData.length
   
@@ -291,6 +333,7 @@ var render = () => {
     return {
       title: titleElement(d),
       status: statusElement(d),
+      asOf: asOf(d),
       filters: chAndVerElem(d),
       description: descElem(d)
     }
@@ -335,8 +378,29 @@ h1.main-title {
   width:1200px;
 }
 
+div.links {
+  max-width: 1200px !important;
+  width:1200px;
+}
+
+div.links a {
+  padding-right:8px;
+}
+
+div.links span {
+  font-weight:900
+}
+
 div#total-results {
   max-width: 1200px;
+}
+
+div.disclaimer {
+  max-width:1200px;
+}
+
+div.disclaimer span {
+  font-weight:900;
 }
 
 div#controls {
@@ -358,21 +422,23 @@ label {
 }
 
 .user-markdown div#table {
-  max-width:1200px;
-  width:1200px;
   margin:auto;
   font-size:14px;
   margin-top:40px;
+    max-width: calc(100% - 20px) ! important;
+  width: calc(100% - 20px) ! important;
 }
 
+
 div.user-markdown {
-  max-width:1200px;
-  width:1200px;
+  max-width: calc(100% - 20px) ! important;
+  width: calc(100% - 20px) ! important;
   margin:auto;
   font-size:14px;
 }
 
 .normandy-filter {
+  width:100%;
   font-family: Courier, monospace
 }
 
@@ -397,10 +463,11 @@ div.study-type {
   display:inline-block;
   padding-left:5px;
   padding-right:5px;
-  padding-top:3px;
-  padding-bottom:3px;
+/*   padding-top:3px;
+  padding-bottom:3px; */
   font-weight:300;
   border-radius:3px;
+  font-size:12px;
 }
 
 .generic-label {
@@ -425,11 +492,17 @@ div.study-type {
   border-radius:4px;
 }
 
+.status-flag-completed {
+  color:white;
+  background-color: #89CFF0
+}
+
 .status-flag-approved {}
 .status-flag-unapproved {}
 
 .filters {
   height:100%;
+  width:100%;
 }
 
 .ch-release {
@@ -448,12 +521,12 @@ div.study-type {
 
 .data-table {
   display: grid;
-  grid-column-gap: 35px;
-  grid-row-gap: 35px;
-  grid-template-columns: 250px 150px 180px auto;
-  max-width:1200px !important;
+/*   grid-column-gap: 35px; */
+/*   grid-row-gap:20px; */
+  grid-template-columns: 250px 100px 230px 230px auto;
+  max-width: calc(100% - 20px) ! important;
+  width: calc(100% - 20px) ! important;
   align-items: start;
-  width:1200px;
   margin:auto;
   margin-top:50px;
   font-size:14px;
@@ -461,7 +534,13 @@ div.study-type {
 
 
 .data-table > div {
+  width: 100%;
+  height:100%;
   align-self: start;
+  padding:30px;
+  padding-left:20px;
+  padding-right:20px;
+  border-bottom:1px solid lightgray;
 }
 
 %% js
