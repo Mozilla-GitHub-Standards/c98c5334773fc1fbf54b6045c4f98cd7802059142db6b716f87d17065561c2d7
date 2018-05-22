@@ -12,7 +12,7 @@
   "title": "index",
   "viewMode": "presentation",
   "lastSaved": "2018-05-10T20:10:41.678Z",
-  "lastExport": "2018-05-22T17:57:54.441Z"
+  "lastExport": "2018-05-22T18:14:14.028Z"
 }
 
 %% resource
@@ -204,7 +204,7 @@ function filterStudy(data, studyTypes) {
 }
 
 function filterCompleted(data) {
-  return data.filter(d => statusFlag(d) !== 'completed' && statusFlag(d) !== 'unapproved')
+  return data.filter(d => statusFlag(d) !== 'completed' && statusFlag(d) !== 'unapproved'  && statusFlag(d) !== 'approved')
 }
 
 //<input id="checkBox" type="checkbox" on>
@@ -217,7 +217,6 @@ function filterCompleted(data) {
   />
 </svg> Shield Studies Viewer</h1>
 
-<div class='disclaimer'><span>disclaimer</span>: the studies here are a cached version until this display is up on the S&I server. Feedback can be sent to <span>hulmer</span> on Slack.</div>
 
 <div class='links'>
   <span>links</span>: 
@@ -230,7 +229,7 @@ function filterCompleted(data) {
   <input type="text" id="search" placeholder="search">
 
 <input id="approved" type="checkbox" value='approved' checked>
-      <label for="approved" class='hang-right'>Only In-Flight Studies</label>
+      <label for="approved" class='hang-right'>Only Enabled Studies</label>
 <input id="hb" type="checkbox" value='hb'>
       <label for="hb">Heartbeat</label>
 
